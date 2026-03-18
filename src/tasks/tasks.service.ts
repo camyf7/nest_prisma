@@ -12,4 +12,17 @@ export class TasksService {
 	findOneTask(id: string) {
 		return { id: id, task: "Comprar pão" }
 	}
+
+	create(body: any) {
+		return body
+	}
+
+	update(id: string, body: any) {
+		let retorno = { id, body }
+		return retorno
+	}
+
+	delete(id: string) {
+		return "Deletar a tarefa" + id
+	}
 }
