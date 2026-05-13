@@ -1,35 +1,68 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Put,
+	Delete,
+	Param,
+	Query,
+	Body,
+	ParseIntPipe,
+	UseInterceptors,
+	UseGuards
+} from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create.task.dto';
 import { UpdateTaskDto } from './dto/update.task.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { LoggerInterceptor } from 'src/common/interceptors/logger.interceptor';
+import { BodyCreateTaskInterceptor } from 'src/common/interceptors/body-create-task.interceptor';
+import { AddHeaderInterceptor } from 'src/common/interceptors/add-header.interceptor';
+import { AuthAdminGuard } from 'src/common/guards/admin.guards';
+import { APP_GUARD } from '@nestjs/core';
+import { TasksUtils } from './tasks.utils';
 
 @Controller('tasks')
+@UseGuards(AuthAdminGuard)
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+	constructor(
+		private readonly taskService: TasksService,
+		private readonly tasksUtils: TasksUtils
+	) { }
 
-  @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.tasksService.listAllTasks(paginationDto);
-  }
+	@Get()
+	@UseInterceptors(LoggerInterceptor)
+	@UseInterceptors(AddHeaderInterceptor)
+	//@UseGuards(AuthAdminGuard)
+	getTasks(@Query() paginationDto: PaginationDto) {
+		console.log(this.tasksUtils.splitString('Hello World from TasksController'))
+		return this.taskService.listAllTasks(paginationDto)
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOneTask(+id);
-  }
+	@Get("/busca")
+	findManyTasks(@Query() queryParam: any) {
+		return this.taskService.listAllTasks()
+	}
 
-  @Post()
-  create(@Body() createTaskDto: CreateTaskDto) {
-    return this.tasksService.create(createTaskDto);
-  }
+	@Get(":id")
+	findSingleTask(@Param('id', ParseIntPipe) id: number) {
+		return this.taskService.findOneTask(id)
+	}
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.tasksService.update(+id, updateTaskDto);
-  }
+	@Post()
+	@UseInterceptors(LoggerInterceptor)
+	@UseInterceptors(BodyCreateTaskInterceptor)
+	createTask(@Body() createTaskDto: CreateTaskDto) {
+		return this.taskService.create(createTaskDto)
+	}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tasksService.delete(+id);
-  }
+	@Put(":id") //Patch
+	updateTask(@Param('id', ParseIntPipe) id: number, @Body() updateTaskDto: UpdateTaskDto) {
+		return this.taskService.update(id, updateTaskDto)
+	}
+
+	@Delete(":id")
+	deleteTask(@Param("id", ParseIntPipe) id: number) {
+		return this.taskService.delete(id)
+	}
 }

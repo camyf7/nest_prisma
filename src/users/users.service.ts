@@ -1,26 +1,11 @@
-import { Injectable, NotFoundException, InternalServerErrorException, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create.user.dto';
 import { UpdateUserDto } from './dto/update.user.dto';
-import { DatabaseService } from '../database/database.service';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class UsersService {
 	constructor(private readonly databaseService: DatabaseService) { }
-
-	async findAll() {
-		try {
-			const users = await this.databaseService.user.findMany({
-				select: {
-					id: true,
-					email: true,
-					name: true,
-				}
-			});
-			return users;
-		} catch (error) {
-			throw new HttpException('Failed to find users', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
 
 	async findOne(id: number) {
 		try {
@@ -34,15 +19,10 @@ export class UsersService {
 				}
 			});
 
-			if (!user) {
-				throw new NotFoundException('User not found');
-			}
+			if (user) return user;
 
-			return user;
+			throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
 		} catch (error) {
-			if (error instanceof NotFoundException) {
-				throw error;
-			}
 			throw new HttpException('Failed to find user', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -63,7 +43,6 @@ export class UsersService {
 			});
 			return newUser;
 		} catch (error) {
-			console.error('Erro ao criar usuário:', error.message);
 			throw new HttpException('Failed to create user', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -75,7 +54,7 @@ export class UsersService {
 			});
 
 			if (!findUser) {
-				throw new NotFoundException('User not found');
+				throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
 			}
 
 			const updatedUser = await this.databaseService.user.update({
@@ -93,9 +72,6 @@ export class UsersService {
 
 			return updatedUser;
 		} catch (error) {
-			if (error instanceof NotFoundException) {
-				throw error;
-			}
 			throw new HttpException('Failed to update user', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -107,7 +83,7 @@ export class UsersService {
 			});
 
 			if (!findUser) {
-				throw new NotFoundException('User not found');
+				throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
 			}
 
 			await this.databaseService.user.delete({
@@ -116,9 +92,6 @@ export class UsersService {
 
 			return { message: 'User deleted successfully' };
 		} catch (error) {
-			if (error instanceof NotFoundException) {
-				throw error;
-			}
 			throw new HttpException('Failed to delete user', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}

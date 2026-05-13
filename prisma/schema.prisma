@@ -7,21 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Task {
+model task {
   id          Int       @id @default(autoincrement())
-  name        String
   description String
   completed   Boolean   @default(false)
   createdAt   DateTime? @default(now())
+  name        String
   userId      Int?
-  user        User?     @relation(fields: [userId], references: [id])
+  user        user?     @relation(fields: [userId], references: [id], map: "Task_userId_fkey")
+
+  @@index([userId], map: "Task_userId_fkey")
 }
 
-model User {
+model user {
   id           Int      @id @default(autoincrement())
   name         String
-  email        String   @unique
+  email        String   @unique(map: "User_email_key")
   passwordHash String
   createdAt    DateTime @default(now())
-  tasks        Task[]
+  task         task[]
 }
