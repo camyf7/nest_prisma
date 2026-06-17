@@ -25,5 +25,6 @@ model user {
   email        String   @unique(map: "User_email_key")
   passwordHash String
   createdAt    DateTime @default(now())
+  avatar       String?
   task         task[]
 }
